@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Successful - NovaTech</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<div class="container success-page">
+    <header>
+        <h1>NovaTech</h1>
+        <p class="tagline">Reimagining Smart Living</p>
+    </header>
+
+    <main>
+        <section class="success-message">
+            <h2>Thank You for Subscribing!</h2>
+            <p>
+                Your email <span th:text="${email}" class="highlight"></span> has been added to our list.
+            </p>
+            <p>
+                We'll keep you updated on NovaSphere's launch and send you exclusive offers.
+            </p>
+            <div class="back-link">
+                <a th:href="@{/}">← Back to homepage</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 NovaTech. All rights reserved.</p>
+    </footer>
+</div>
+</body>
