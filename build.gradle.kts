@@ -24,6 +24,9 @@ repositories {
 }
 
 dependencies {
+    implementation("org.hibernate.orm:hibernate-community-dialects:6.4.4.Final")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.xerial:sqlite-jdbc:3.43.0.0")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("jakarta.validation:jakarta.validation-api:3.0.2")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
