@@ -1,12 +1,20 @@
-package com.example.harbour_swer.forms;
+package com.example.harbour_swer.data;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 
 @Data
+@Entity
 public class Subscription {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long id;
     private enum Source {
         API,
         PAGE
