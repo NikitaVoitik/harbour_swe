@@ -1,7 +1,7 @@
 package com.example.harbour_swer.controllers;
 
-import com.example.harbour_swer.forms.Subscription;
-import com.example.harbour_swer.forms.SubscriptionService;
+import com.example.harbour_swer.data.Subscription;
+import com.example.harbour_swer.data.SubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -36,7 +36,7 @@ public class EmailController {
         subscriptionService.addSubscription(subscription);
 
         model.addAttribute("email", subscription.getEmail());
-        model.addAttribute("subscriptions", subscriptionService.getSubscriptionList().getSubscriptions());
+        model.addAttribute("subscriptions", subscriptionService.getAllSubscriptions());
 
         return "success";
     }

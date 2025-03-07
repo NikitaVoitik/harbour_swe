@@ -1,7 +1,7 @@
 package com.example.harbour_swer.controllers;
 
-import com.example.harbour_swer.forms.Subscription;
-import com.example.harbour_swer.forms.SubscriptionService;
+import com.example.harbour_swer.data.Subscription;
+import com.example.harbour_swer.data.SubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ public class EmailApiController {
 
     @GetMapping("/subscriptions")
     public List<Subscription> getAllSubscriptions() {
-        return subscriptionService.getSubscriptionList().getSubscriptions();
+        return subscriptionService.getAllSubscriptions();
     }
 
     @PostMapping("/subscribe")
