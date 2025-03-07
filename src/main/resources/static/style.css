@@ -110,3 +110,17 @@ footer {
 .back-link a:hover {
     text-decoration: underline;
 }
+
+.subscriptions-list {
+    margin-top: 2rem;
+}
+
+.subscriptions-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.subscriptions-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}

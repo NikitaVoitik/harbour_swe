@@ -1,6 +1,7 @@
 package com.example.harbour_swer.controllers;
 
 import com.example.harbour_swer.forms.Subscription;
+import com.example.harbour_swer.forms.SubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -10,12 +11,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Controller
-public class EmailContoller {
-    private final List<Subscription> emails = new ArrayList<>();
+public class EmailController {
+    private final SubscriptionService subscriptionService;
+
+    public EmailController(SubscriptionService subscriptionService) {
+        this.subscriptionService = subscriptionService;
+    }
 
     @GetMapping("/")
     public String emailView(Model model) {
@@ -29,20 +31,13 @@ public class EmailContoller {
             return "main";
         }
 
-        String ip = request.getRemoteAddr();
-        subscription.setIp(ip);
+        subscription.setIp(request.getRemoteAddr());
+        subscription.setPageSource();
+        subscriptionService.addSubscription(subscription);
 
         model.addAttribute("email", subscription.getEmail());
+        model.addAttribute("subscriptions", subscriptionService.getSubscriptionList().getSubscriptions());
 
-        emails.add(subscription);
-
-        getEmails();
         return "success";
-    }
-
-    public void getEmails() {
-        for (Subscription email : emails) {
-            System.out.println(email);
-        }
     }
 }

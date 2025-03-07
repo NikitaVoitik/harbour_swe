@@ -25,6 +25,12 @@
                 <a th:href="@{/}">← Back to homepage</a>
             </div>
         </section>
+        <section class="subscriptions-list">
+            <h3>All Subscribers</h3>
+            <ul>
+                <li th:each="sub : ${subscriptions}" th:text="${sub}"></li>
+            </ul>
+        </section>
     </main>
 
     <footer>
