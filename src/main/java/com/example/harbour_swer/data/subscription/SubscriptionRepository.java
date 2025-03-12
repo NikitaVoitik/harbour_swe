@@ -1,4 +1,4 @@
-package com.example.harbour_swer.data;
+package com.example.harbour_swer.data.subscription;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

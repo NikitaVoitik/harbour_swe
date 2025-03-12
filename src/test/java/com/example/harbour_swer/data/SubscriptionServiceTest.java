@@ -1,4 +1,7 @@
 package com.example.harbour_swer.data;
+import com.example.harbour_swer.data.subscription.Subscription;
+import com.example.harbour_swer.data.subscription.SubscriptionRepository;
+import com.example.harbour_swer.data.subscription.SubscriptionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

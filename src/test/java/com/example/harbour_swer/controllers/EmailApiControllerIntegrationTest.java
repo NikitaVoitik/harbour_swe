@@ -1,7 +1,7 @@
 package com.example.harbour_swer.controllers;
 
-import com.example.harbour_swer.data.Subscription;
-import com.example.harbour_swer.data.SubscriptionRepository;
+import com.example.harbour_swer.data.subscription.Subscription;
+import com.example.harbour_swer.data.subscription.SubscriptionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package com.example.harbour_swer.data;
+package com.example.harbour_swer.data.subscription;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
