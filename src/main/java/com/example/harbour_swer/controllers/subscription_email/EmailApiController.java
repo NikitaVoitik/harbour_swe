@@ -1,7 +1,7 @@
-package com.example.harbour_swer.controllers;
+package com.example.harbour_swer.controllers.subscription_email;
 
-import com.example.harbour_swer.data.Subscription;
-import com.example.harbour_swer.data.SubscriptionService;
+import com.example.harbour_swer.data.subscription.Subscription;
+import com.example.harbour_swer.data.subscription.SubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

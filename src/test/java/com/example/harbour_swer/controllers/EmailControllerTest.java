@@ -1,7 +1,8 @@
 package com.example.harbour_swer.controllers;
 
-import com.example.harbour_swer.data.Subscription;
-import com.example.harbour_swer.data.SubscriptionService;
+import com.example.harbour_swer.controllers.subscription_email.EmailController;
+import com.example.harbour_swer.data.subscription.Subscription;
+import com.example.harbour_swer.data.subscription.SubscriptionService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,6 +1,6 @@
 package com.example.harbour_swer.controllers;
 
-import com.example.harbour_swer.data.SubscriptionRepository;
+import com.example.harbour_swer.data.subscription.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
