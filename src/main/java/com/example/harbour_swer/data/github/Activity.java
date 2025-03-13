@@ -1,10 +1,12 @@
 package com.example.harbour_swer.data.github;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Data
 @Table(name = "activities")
 public class Activity {
     @Id

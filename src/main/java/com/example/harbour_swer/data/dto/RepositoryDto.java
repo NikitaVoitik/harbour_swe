@@ -2,9 +2,12 @@ package com.example.harbour_swer.data.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
+
+@Data
 public class RepositoryDto {
     private Long id;
 
