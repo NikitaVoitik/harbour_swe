@@ -80,7 +80,10 @@ public class ActivityService {
         String repoName = repository.getName();
 
         List<Activity> commits = githubApiService.fetchCommits(repoName, lastUpdated);
+        System.out.println(commits);
         for (Activity commit : commits) {
+            System.out.println(1);
+            System.out.println(commit);
             if (!activityRepository.existsByRepositoryAndTypeAndActivityId(
                     repository, Activity.ActivityType.COMMIT, commit.getActivityId())) {
                 commit.setRepository(repository);

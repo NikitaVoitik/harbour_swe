@@ -4,6 +4,8 @@ import com.example.harbour_swer.data.github.Activity;
 import com.example.harbour_swer.data.github.Repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 public class GithubApiService {
@@ -20,6 +23,7 @@ public class GithubApiService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String apiBaseUrl = "https://api.github.com";
+    private static final Logger logger = LoggerFactory.getLogger(GithubApiService.class);
 
     @Value("${github.api.token:}")
     private String apiToken;
@@ -31,21 +35,15 @@ public class GithubApiService {
 
     public Repository fetchRepositoryInfo(String repoName) {
         String url = apiBaseUrl + "/repos/" + repoName;
-
         try {
-            ResponseEntity<String> response = makeApiRequest(url);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-
+            return executeApiRequest(url, jsonNode -> {
                 Repository repository = new Repository();
-                repository.setName(root.get("name").asText());
+                repository.setName(jsonNode.get("full_name").asText());
                 repository.setLastChecked(LocalDateTime.now());
-
                 return repository;
-            }
-            return null;
+            });
         } catch (Exception e) {
-            System.err.println("Error fetching repository info: " + e.getMessage());
+            logger.error("Error fetching repository info: " + e.getMessage());
             return null;
         }
     }
@@ -55,158 +53,124 @@ public class GithubApiService {
         if (since != null) {
             url += "?since=" + since.format(DateTimeFormatter.ISO_DATE_TIME);
         }
+        System.out.println("Fetching commits for " + repoName);
+        System.out.println(url);
 
-        List<Activity> activities = new ArrayList<>();
+        return fetchActivities(url, node -> {
+            Activity activity = new Activity();
+            activity.setType(Activity.ActivityType.COMMIT);
+            activity.setActivityId(node.get("sha").asText());
 
-        try {
-            ResponseEntity<String> response = makeApiRequest(url);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode commitsArray = objectMapper.readTree(response.getBody());
+            JsonNode commitData = node.get("commit");
+            System.out.println(10);
+            System.out.println(commitData);
+            String message = commitData.get("message").asText();
+            activity.setTitle(message.split("\\n")[0]);
+            activity.setDescription(message);
 
-                for (JsonNode commit : commitsArray) {
-                    Activity activity = new Activity();
-                    activity.setType(Activity.ActivityType.COMMIT);
-                    activity.setActivityId(commit.get("sha").asText());
-
-                    JsonNode commitData = commit.get("commit");
-                    String message = commitData.get("message").asText();
-                    activity.setTitle(message.split("\\n")[0]);
-                    activity.setDescription(message);
-
-                    if (commit.has("author") && !commit.get("author").isNull()) {
-                        activity.setAuthor(commit.get("author").get("login").asText());
-                    } else {
-                        activity.setAuthor(commitData.get("author").get("name").asText());
-                    }
-
-                    String dateStr = commitData.get("author").get("date").asText();
-                    activity.setCreatedAt(LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME));
-
-                    activities.add(activity);
-                }
+            if (node.has("author") && !node.get("author").isNull()) {
+                activity.setAuthor(node.get("author").get("login").asText());
+            } else {
+                activity.setAuthor(commitData.get("author").get("name").asText());
             }
-        } catch (Exception e) {
-            System.err.println("Error fetching commits: " + e.getMessage());
-        }
 
-        return activities;
+            String dateStr = commitData.get("author").get("date").asText();
+            activity.setCreatedAt(LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME));
+
+            return activity;
+        });
     }
 
     public List<Activity> fetchPullRequests(String repoName, String state) {
         String url = apiBaseUrl + "/repos/" + repoName + "/pulls?state=" + state;
-        List<Activity> activities = new ArrayList<>();
-
-        try {
-            ResponseEntity<String> response = makeApiRequest(url);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode prsArray = objectMapper.readTree(response.getBody());
-
-                for (JsonNode pr : prsArray) {
-                    Activity activity = new Activity();
-                    activity.setType(Activity.ActivityType.PULL_REQUEST);
-                    activity.setActivityId(pr.get("number").asText());
-                    activity.setTitle(pr.get("title").asText());
-
-                    if (pr.has("body") && !pr.get("body").isNull()) {
-                        activity.setDescription(pr.get("body").asText());
-                    }
-
-                    activity.setAuthor(pr.get("user").get("login").asText());
-                    activity.setCreatedAt(LocalDateTime.parse(pr.get("created_at").asText(),
-                            DateTimeFormatter.ISO_DATE_TIME));
-                    activity.setUpdatedAt(LocalDateTime.parse(pr.get("updated_at").asText(),
-                            DateTimeFormatter.ISO_DATE_TIME));
-
-                    activities.add(activity);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching pull requests: " + e.getMessage());
-        }
-
-        return activities;
+        return fetchActivities(url, node -> createActivityFromIssueOrPR(node, Activity.ActivityType.PULL_REQUEST));
     }
 
     public List<Activity> fetchIssues(String repoName, String state) {
         String url = apiBaseUrl + "/repos/" + repoName + "/issues?state=" + state;
-        List<Activity> activities = new ArrayList<>();
-
-        try {
-            ResponseEntity<String> response = makeApiRequest(url);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode issuesArray = objectMapper.readTree(response.getBody());
-
-                for (JsonNode issue : issuesArray) {
-                    if (issue.has("pull_request")) {
-                        continue;
-                    }
-
-                    Activity activity = new Activity();
-                    activity.setType(Activity.ActivityType.ISSUE);
-                    activity.setActivityId(issue.get("number").asText());
-                    activity.setTitle(issue.get("title").asText());
-
-                    if (issue.has("body") && !issue.get("body").isNull()) {
-                        activity.setDescription(issue.get("body").asText());
-                    }
-
-                    activity.setAuthor(issue.get("user").get("login").asText());
-                    activity.setCreatedAt(LocalDateTime.parse(issue.get("created_at").asText(),
-                            DateTimeFormatter.ISO_DATE_TIME));
-                    activity.setUpdatedAt(LocalDateTime.parse(issue.get("updated_at").asText(),
-                            DateTimeFormatter.ISO_DATE_TIME));
-
-                    activities.add(activity);
-                }
+        return fetchActivities(url, node -> {
+            if (node.has("pull_request")) {
+                return null;
             }
-        } catch (Exception e) {
-            System.err.println("Error fetching issues: " + e.getMessage());
-        }
-
-        return activities;
+            return createActivityFromIssueOrPR(node, Activity.ActivityType.ISSUE);
+        });
     }
 
     public List<Activity> fetchReleases(String repoName) {
         String url = apiBaseUrl + "/repos/" + repoName + "/releases";
-        List<Activity> activities = new ArrayList<>();
+        return fetchActivities(url, node -> {
+            Activity activity = new Activity();
+            activity.setType(Activity.ActivityType.RELEASE);
+            activity.setActivityId(node.get("id").asText());
 
+            if (node.has("name") && !node.get("name").isNull()) {
+                activity.setTitle(node.get("name").asText());
+            } else {
+                activity.setTitle(node.get("tag_name").asText());
+            }
+
+            if (node.has("body") && !node.get("body").isNull()) {
+                activity.setDescription(node.get("body").asText());
+            }
+
+            activity.setAuthor(node.get("author").get("login").asText());
+            activity.setCreatedAt(parseDateTime(node.get("created_at").asText()));
+
+            if (node.has("published_at") && !node.get("published_at").isNull()) {
+                activity.setUpdatedAt(parseDateTime(node.get("published_at").asText()));
+            }
+
+            return activity;
+        });
+    }
+
+    private Activity createActivityFromIssueOrPR(JsonNode node, Activity.ActivityType type) {
+        Activity activity = new Activity();
+        activity.setType(type);
+        activity.setActivityId(node.get("number").asText());
+        activity.setTitle(node.get("title").asText());
+
+        if (node.has("body") && !node.get("body").isNull()) {
+            activity.setDescription(node.get("body").asText());
+        }
+
+        activity.setAuthor(node.get("user").get("login").asText());
+        activity.setCreatedAt(parseDateTime(node.get("created_at").asText()));
+        activity.setUpdatedAt(parseDateTime(node.get("updated_at").asText()));
+
+        return activity;
+    }
+
+    private <T> List<T> fetchActivities(String url, Function<JsonNode, T> mapper) {
+        List<T> results = new ArrayList<>();
         try {
             ResponseEntity<String> response = makeApiRequest(url);
             if (response.getStatusCode() == HttpStatus.OK) {
-                JsonNode releasesArray = objectMapper.readTree(response.getBody());
-
-                for (JsonNode release : releasesArray) {
-                    Activity activity = new Activity();
-                    activity.setType(Activity.ActivityType.RELEASE);
-                    activity.setActivityId(release.get("id").asText());
-
-                    if (release.has("name") && !release.get("name").isNull()) {
-                        activity.setTitle(release.get("name").asText());
-                    } else {
-                        activity.setTitle(release.get("tag_name").asText());
+                JsonNode itemsArray = objectMapper.readTree(response.getBody());
+                for (JsonNode item : itemsArray) {
+                    T result = mapper.apply(item);
+                    if (result != null) {
+                        results.add(result);
                     }
-
-                    if (release.has("body") && !release.get("body").isNull()) {
-                        activity.setDescription(release.get("body").asText());
-                    }
-
-                    activity.setAuthor(release.get("author").get("login").asText());
-                    activity.setCreatedAt(LocalDateTime.parse(release.get("created_at").asText(),
-                            DateTimeFormatter.ISO_DATE_TIME));
-
-                    if (release.has("published_at") && !release.get("published_at").isNull()) {
-                        activity.setUpdatedAt(LocalDateTime.parse(release.get("published_at").asText(),
-                                DateTimeFormatter.ISO_DATE_TIME));
-                    }
-
-                    activities.add(activity);
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error fetching releases: " + e.getMessage());
+            logger.error("Error fetching data from " + url + ": " + e.getMessage());
         }
+        return results;
+    }
 
-        return activities;
+    private <T> T executeApiRequest(String url, Function<JsonNode, T> mapper) {
+        try {
+            ResponseEntity<String> response = makeApiRequest(url);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                JsonNode root = objectMapper.readTree(response.getBody());
+                return mapper.apply(root);
+            }
+        } catch (Exception e) {
+            logger.error("Error executing API request: " + e.getMessage());
+        }
+        return null;
     }
 
     private ResponseEntity<String> makeApiRequest(String url) {
@@ -216,8 +180,11 @@ public class GithubApiService {
         if (apiToken != null && !apiToken.isEmpty()) {
             headers.set("Authorization", "Bearer " + apiToken);
         }
-
         HttpEntity<String> entity = new HttpEntity<>(headers);
         return restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    }
+
+    private LocalDateTime parseDateTime(String dateTimeString) {
+        return LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
     }
 }

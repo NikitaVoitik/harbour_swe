@@ -8,6 +8,8 @@ import com.example.harbour_swer.data.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -50,7 +52,8 @@ public class RepositoryService {
         }
 
         repoInfo.setUser(user);
-        repoInfo.setName(repoFullName);
+        repoInfo.setName(repoFullName);;
+        repoInfo.setLastChecked(LocalDateTime.now().minusYears(20));
         Repository savedRepository = repositoryRepository.save(repoInfo);
 
         return convertToDto(savedRepository);
@@ -71,9 +74,14 @@ public class RepositoryService {
         return repositoryRepository.findAllByOrderByLastCheckedAsc();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateLastChecked(Repository repository) {
-        repository.setLastChecked(LocalDateTime.now());
-        repositoryRepository.save(repository);
+        Repository freshRepository = repositoryRepository.findById(repository.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Repository not found with id: " + repository.getId()));
+
+        freshRepository.setLastChecked(LocalDateTime.now());
+        repositoryRepository.save(freshRepository);
     }
 
     private RepositoryDto convertToDto(Repository repository) {
