@@ -38,3 +38,5 @@ out/
 
 
 database.db
+
+application-local.properties
