@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,10 +35,12 @@ public class RepositoryService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
 
-        boolean alreadyTracked = user.getTrackedRepositories().stream()
+        List<Repository> existingRepos = repositoryRepository.findByUser(user);
+
+        boolean alreadyExists = existingRepos.stream()
                 .anyMatch(repo -> repo.getName().equals(repoFullName));
 
-        if (alreadyTracked) {
+        if (alreadyExists) {
             throw new IllegalArgumentException("Repository already tracked");
         }
 
@@ -47,6 +50,7 @@ public class RepositoryService {
         }
 
         repoInfo.setUser(user);
+        repoInfo.setName(repoFullName);
         Repository savedRepository = repositoryRepository.save(repoInfo);
 
         return convertToDto(savedRepository);

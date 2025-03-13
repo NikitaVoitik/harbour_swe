@@ -15,6 +15,8 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
 
     List<Activity> findByRepositoryAndTypeAndCreatedAtAfter(Repository repository, Activity.ActivityType type, LocalDateTime since);
 
+    Page<Activity> findByRepositoryAndTypeOrderByCreatedAtDesc(Repository repository, Activity.ActivityType type, Pageable pageable);
+
     boolean existsByRepositoryAndTypeAndActivityId(Repository repository, Activity.ActivityType type, String activityId);
 
     @Query("SELECT a FROM Activity a WHERE a.repository.user.id = :userId ORDER BY a.createdAt DESC")
